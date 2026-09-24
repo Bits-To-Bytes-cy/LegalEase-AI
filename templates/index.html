@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LegalEase AI – Smart Legal Document Assistant</title>
+  <meta name="description" content="LegalEase AI helps you understand legal documents with AI-powered summaries, risk analysis, clause explanations, document comparison, next steps, and lawyer preparation briefs." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<!-- ─────────────────── HEADER ─────────────────── -->
+<header class="app-header" role="banner">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon" aria-hidden="true">⚖️</span>
+      <span class="logo-text">LegalEase <span class="logo-accent">AI</span></span>
+    </div>
+    <div class="header-notice" role="note" aria-label="Legal disclaimer">
+      <span class="notice-dot" aria-hidden="true"></span>
+      Legal information only · Not legal advice
+    </div>
+  </div>
+</header>
+
+<!-- ─────────────────── MAIN ─────────────────── -->
+<main class="app-main">
+
+  <!-- Upload Panel -->
+  <section class="panel upload-panel" id="upload-section" aria-label="Document Upload">
+    <div class="panel-header">
+      <h1 class="panel-title">Analyse a Legal Document</h1>
+      <p class="panel-subtitle">Understand legal documents with evidence, not legal jargon. Upload a PDF, DOCX, or TXT file to get started.</p>
+    </div>
+
+    <form id="upload-form" class="upload-form" novalidate>
+      <div id="drop-zone" class="drop-zone" role="button" tabindex="0" aria-label="Click or drag a file here to upload">
+        <span class="drop-icon" aria-hidden="true">📄</span>
+        <p class="drop-label">Drag &amp; drop or <span class="drop-link">browse</span></p>
+        <p class="drop-hint">PDF · DOCX · TXT &nbsp;·&nbsp; Max 16 MB</p>
+        <input type="file" id="file-input" name="file" accept=".pdf,.docx,.txt" class="file-input" aria-label="Choose a legal document to upload" />
+      </div>
+
+      <div class="upload-meta">
+        <label class="meta-label" for="country-input">Country <span class="optional">(optional)</span></label>
+        <input id="country-input" name="country" type="text" class="meta-input" placeholder="e.g. India" autocomplete="country-name" />
+        <label class="meta-label" for="region-input">State / Region <span class="optional">(optional)</span></label>
+        <input id="region-input" name="region" type="text" class="meta-input" placeholder="e.g. Kerala" />
+      </div>
+
+      <button type="submit" id="upload-btn" class="btn btn-primary" aria-label="Upload document">
+        <span class="btn-icon" aria-hidden="true">🚀</span> Upload &amp; Analyse
+      </button>
+    </form>
+
+    <div id="upload-error" class="error-banner" role="alert" aria-live="polite" hidden></div>
+  </section>
+
+  <!-- Loading overlay -->
+  <div id="page-loader" class="page-loader" hidden aria-live="polite" aria-label="Processing document">
+    <div class="spinner" aria-hidden="true"></div>
+    <p id="loader-msg">Uploading and processing…</p>
+  </div>
+
+  <!-- Workspace (shown after upload) -->
+  <div id="workspace" class="workspace" hidden>
+
+    <!-- Document banner -->
+    <div class="doc-banner" id="doc-banner">
+      <div class="doc-banner-left">
+        <span class="doc-icon" aria-hidden="true">📋</span>
+        <div>
+          <p class="doc-name" id="doc-name"></p>
+          <p class="doc-meta" id="doc-meta"></p>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="new-upload-btn" aria-label="Upload a new document">↩ New Document</button>
+    </div>
+
+    <!-- Tab bar -->
+    <nav class="tab-bar" role="tablist" aria-label="Analysis tabs">
+      <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-summary"   id="btn-summary"   data-tab="summary">📄 Summary</button>
+      <button class="tab"        role="tab" aria-selected="false" aria-controls="tab-risks"     id="btn-risks"     data-tab="risks">🔍 Risks</button>
+      <button class="tab"        role="tab" aria-selected="false" aria-controls="tab-deadlines" id="btn-deadlines" data-tab="deadlines">⏰ Deadlines</button>
+      <button class="tab"        role="tab" aria-selected="false" aria-controls="tab-clauses"   id="btn-clauses"   data-tab="clauses">⭐ Key Clauses</button>
+      <button class="tab"        role="tab" aria-selected="false" aria-controls="tab-consist"   id="btn-consist"   data-tab="consist">⚡ Consistency</button>
+      <button class="tab"        role="tab" aria-selected="false" aria-controls="tab-chat"      id="btn-chat"      data-tab="chat">💬 Chat</button>
+      <button class="tab"        role="tab" aria-selected="false" aria-controls="tab-compare"   id="btn-compare"   data-tab="compare">⚖️ Compare</button>
+      <button class="tab"        role="tab" aria-selected="false" aria-controls="tab-nextsteps" id="btn-nextsteps" data-tab="nextsteps">🧭 Next Steps</button>
+      <button class="tab"        role="tab" aria-selected="false" aria-controls="tab-lawyerprep" id="btn-lawyerprep" data-tab="lawyerprep">💼 Lawyer Prep</button>
+    </nav>
+
+    <!-- ── TAB: SUMMARY ── -->
+    <section id="tab-summary" class="tab-panel active" role="tabpanel" aria-labelledby="btn-summary">
+      <div class="tab-actions">
+        <button class="btn btn-secondary" id="load-summary-btn">Generate Summary</button>
+      </div>
+      <div id="summary-loading" class="loading-state" hidden>
+        <div class="spinner-sm" aria-hidden="true"></div> Generating summary…
+      </div>
+      <div id="summary-error" class="error-banner" role="alert" hidden></div>
+      <div id="summary-content" hidden>
+        <div class="overview-grid" id="overview-grid"></div>
+        <div class="card mt-4">
+          <h3 class="card-heading">Document Summary</h3>
+          <p id="summary-text" class="body-text"></p>
+        </div>
+        <div id="key-clauses-section" hidden>
+          <h3 class="section-heading">Review-Worthy Clauses</h3>
+          <div id="key-clauses-list" class="clauses-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TAB: RISKS ── -->
+    <section id="tab-risks" class="tab-panel" role="tabpanel" aria-labelledby="btn-risks" hidden>
+      <div class="tab-actions">
+        <button class="btn btn-secondary" id="load-risks-btn">Analyse Risks</button>
+      </div>
+      <div id="risks-loading" class="loading-state" hidden>
+        <div class="spinner-sm" aria-hidden="true"></div> Analysing risks…
+      </div>
+      <div id="risks-error" class="error-banner" role="alert" hidden></div>
+      <div id="risks-content" hidden>
+        <div id="risks-empty" class="empty-state" hidden>
+          <span aria-hidden="true">✅</span>
+          <p>No significant risk patterns found in this document.</p>
+        </div>
+        <div id="risks-list" class="risks-list"></div>
+      </div>
+    </section>
+
+    <!-- ── TAB: DEADLINES ── -->
+    <section id="tab-deadlines" class="tab-panel" role="tabpanel" aria-labelledby="btn-deadlines" hidden>
+      <div class="tab-actions">
+        <button class="btn btn-secondary" id="load-deadlines-btn">Detect Deadlines</button>
+      </div>
+      <div id="deadlines-loading" class="loading-state" hidden>
+        <div class="spinner-sm" aria-hidden="true"></div> Detecting deadlines…
+      </div>
+      <div id="deadlines-error" class="error-banner" role="alert" hidden></div>
+      <div id="deadlines-content" hidden>
+        <div id="deadlines-empty" class="empty-state" hidden>
+          <span aria-hidden="true">📅</span>
+          <p>No time-bound provisions detected.</p>
+        </div>
+        <div id="deadlines-list" class="deadlines-list"></div>
+      </div>
+    </section>
+
+    <!-- ── TAB: KEY CLAUSES ── -->
+    <section id="tab-clauses" class="tab-panel" role="tabpanel" aria-labelledby="btn-clauses" hidden>
+      <div class="tab-actions">
+        <button class="btn btn-secondary" id="load-clauses-btn">Load Key Clauses</button>
+      </div>
+      <div id="clauses-loading" class="loading-state" hidden>
+        <div class="spinner-sm" aria-hidden="true"></div> Loading clauses…
+      </div>
+      <div id="clauses-error" class="error-banner" role="alert" hidden></div>
+      <div id="clauses-content" hidden>
+        <div id="clauses-empty" class="empty-state" hidden>
+          <span aria-hidden="true">📝</span>
+          <p>No review-worthy clauses identified.</p>
+        </div>
+        <div id="clauses-list" class="clauses-grid"></div>
+      </div>
+      <!-- Clause detail drawer -->
+      <div id="clause-drawer" class="drawer" hidden role="dialog" aria-modal="true" aria-label="Clause explanation">
+        <div class="drawer-header">
+          <h3 id="drawer-title" class="drawer-heading">Clause Explanation</h3>
+          <button class="drawer-close" id="drawer-close-btn" aria-label="Close explanation">✕</button>
+        </div>
+        <div id="drawer-loading" class="loading-state" hidden>
+          <div class="spinner-sm" aria-hidden="true"></div> Generating explanation…
+        </div>
+        <div id="drawer-content"></div>
+      </div>
+    </section>
+
+    <!-- ── TAB: CONSISTENCY ── -->
+    <section id="tab-consist" class="tab-panel" role="tabpanel" aria-labelledby="btn-consist" hidden>
+      <div class="tab-actions">
+        <button class="btn btn-secondary" id="load-consist-btn">Check Consistency</button>
+      </div>
+      <div id="consist-loading" class="loading-state" hidden>
+        <div class="spinner-sm" aria-hidden="true"></div> Checking consistency…
+      </div>
+      <div id="consist-error" class="error-banner" role="alert" hidden></div>
+      <div id="consist-content" hidden>
+        <div id="consist-empty" class="empty-state" hidden>
+          <span aria-hidden="true">✅</span>
+          <p>No obvious inconsistencies found in this document.</p>
+        </div>
+        <div id="consist-list" class="risks-list"></div>
+      </div>
+    </section>
+
+    <!-- ── TAB: CHAT ── -->
+    <section id="tab-chat" class="tab-panel" role="tabpanel" aria-labelledby="btn-chat" hidden>
+      <div class="chat-container">
+        <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-label="Conversation">
+          <div class="chat-welcome">
+            <span aria-hidden="true">💬</span>
+            <p>Ask a question about this document.</p>
+            <p class="chat-hint">e.g. "What happens if I terminate early?" or "What are the payment terms?"</p>
+          </div>
+        </div>
+        <form class="chat-form" id="chat-form" novalidate>
+          <input type="text" id="chat-input" class="chat-input" placeholder="Ask about this document…" autocomplete="off" aria-label="Your question" />
+          <button type="submit" class="btn btn-primary btn-send" id="chat-send-btn" aria-label="Send question">Send</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ── TAB: COMPARE ── -->
+    <section id="tab-compare" class="tab-panel" role="tabpanel" aria-labelledby="btn-compare" hidden>
+      <div class="card mb-4">
+        <h3 class="card-heading">Compare Two Documents</h3>
+        <p class="panel-subtitle">Upload or select a second document (Document B) to compare against current Document A.</p>
+        <form id="compare-form" class="upload-meta mt-4" style="grid-template-columns: 1fr auto;" novalidate>
+          <input type="file" id="file-b-input" accept=".pdf,.docx,.txt" class="meta-input" aria-label="Select Document B to compare" />
+          <button type="submit" id="run-compare-btn" class="btn btn-primary">Compare Documents</button>
+        </form>
+      </div>
+      <div id="compare-loading" class="loading-state" hidden>
+        <div class="spinner-sm" aria-hidden="true"></div> Comparing documents…
+      </div>
+      <div id="compare-error" class="error-banner" role="alert" hidden></div>
+      <div id="compare-content" hidden>
+        <div class="overview-grid" id="compare-summary-grid"></div>
+        <div class="tab-actions mt-4">
+          <button class="btn btn-ghost btn-sm filter-btn active" data-filter="ALL">All Changes</button>
+          <button class="btn btn-ghost btn-sm filter-btn" data-filter="MODIFIED">Modified</button>
+          <button class="btn btn-ghost btn-sm filter-btn" data-filter="ADDED">Added</button>
+          <button class="btn btn-ghost btn-sm filter-btn" data-filter="REMOVED">Removed</button>
+          <button class="btn btn-ghost btn-sm filter-btn" data-filter="UNCHANGED">Unchanged</button>
+        </div>
+        <div id="compare-list" class="risks-list mt-4"></div>
+      </div>
+    </section>
+
+    <!-- ── TAB: NEXT STEPS ── -->
+    <section id="tab-nextsteps" class="tab-panel" role="tabpanel" aria-labelledby="btn-nextsteps" hidden>
+      <div class="card mb-4">
+        <h3 class="card-heading">Practical Next-Step Guidance</h3>
+        <p class="panel-subtitle">Describe your situation or question to generate practical considerations and verification checklists.</p>
+        <form id="nextsteps-form" class="mt-4" novalidate>
+          <textarea id="situation-input" class="meta-input" rows="3" placeholder="Describe your situation (e.g. 'Landlord is asking for early termination deposit deduction...')" style="width: 100%; margin-bottom: 0.75rem;"></textarea>
+          <button type="submit" class="btn btn-primary">Get Practical Guidance</button>
+        </form>
+      </div>
+      <div id="nextsteps-loading" class="loading-state" hidden>
+        <div class="spinner-sm" aria-hidden="true"></div> Generating guidance…
+      </div>
+      <div id="nextsteps-error" class="error-banner" role="alert" hidden></div>
+      <div id="nextsteps-content" hidden></div>
+    </section>
+
+    <!-- ── TAB: LAWYER PREP ── -->
+    <section id="tab-lawyerprep" class="tab-panel" role="tabpanel" aria-labelledby="btn-lawyerprep" hidden>
+      <div class="card mb-4">
+        <h3 class="card-heading">Case Preparation Brief for Lawyer Consultation</h3>
+        <p class="panel-subtitle">Generate a structured consultation brief to maximize value during a legal consultation.</p>
+        <form id="lawyerprep-form" class="mt-4" novalidate>
+          <textarea id="lawyerprep-situation-input" class="meta-input" rows="3" placeholder="Describe your situation or key concerns for your lawyer..." style="width: 100%; margin-bottom: 0.75rem;"></textarea>
+          <button type="submit" class="btn btn-primary">Generate Case Brief</button>
+        </form>
+      </div>
+      <div id="lawyerprep-loading" class="loading-state" hidden>
+        <div class="spinner-sm" aria-hidden="true"></div> Preparing case brief…
+      </div>
+      <div id="lawyerprep-error" class="error-banner" role="alert" hidden></div>
+      <div id="lawyerprep-content" hidden></div>
+    </section>
+
+  </div><!-- /workspace -->
+</main>
+
+<!-- ─────────────────── FOOTER ─────────────────── -->
+<footer class="app-footer" role="contentinfo">
+  <p>LegalEase AI provides legal information only. It is not a substitute for professional legal advice. Always consult a qualified lawyer for legal matters.</p>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

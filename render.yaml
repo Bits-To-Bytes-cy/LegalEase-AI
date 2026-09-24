@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: legalease-ai
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -b 0.0.0.0:$PORT backend.app:app
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: DATABASE_URI
+        value: sqlite:///legalease.db
+      - key: DEBUG
+        value: "False"
+    healthCheckPath: /api/health
