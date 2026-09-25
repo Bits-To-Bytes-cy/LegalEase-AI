@@ -19,43 +19,6 @@ CLAUSE_PATTERNS = [
     r"(?i)\bDISPUTE RESOLUTION\b"
 ]
 
-def _is_valid_clause_title(title: str) -> bool:
-    """Return True only if the title looks like a genuine structural heading.
-
-    Rejects:
-    - None / empty
-    - The 'Document Start' placeholder
-    - Titles that end with sentence-ending punctuation (fragments like 'after termination.')
-    - Titles shorter than 3 characters
-    - Prose-sentence continuations stored as 50-char truncations
-      (e.g. 'Termination becomes effective upon expiry of the n')
-    """
-    if not title or not title.strip():
-        return False
-    t = title.strip()
-    if t.lower() == "document start":
-        return False
-    # Reject if it ends with sentence-ending punctuation – strong indicator of a fragment
-    if t.endswith(('.', '?', '!', ',', ';')):
-        return False
-    if len(t) < 3:
-        return False
-    # Reject prose-sentence continuations:
-    # Genuine structural headings have few words or are ALL-CAPS / numbered.
-    # A continuation sentence like "Termination becomes effective upon expiry of the n"
-    # has many words and the majority are lowercase verbs/prepositions.
-    words = t.split()
-    if len(words) >= 5:
-        # Count lowercase words (not ALL-CAPS, not Title-Case-single)
-        lowercase_count = sum(1 for w in words if w == w.lower() and w.isalpha())
-        if lowercase_count >= len(words) // 2:
-            # Looks like a prose sentence, not a heading – but allow "Limitation of Liability" etc.
-            # Exception: if it starts with a digit (numbered clause) keep it
-            if not words[0][0].isdigit():
-                return False
-    return True
-
-
 def format_chunks(text, file_type="txt", page_num=None):
     # simple chunker that respects clause boundaries
     # split by paragraphs first
@@ -86,7 +49,7 @@ def format_chunks(text, file_type="txt", page_num=None):
             if len(current_text) > 0:
                 chunks.append({
                     "page_number": page_num,
-                    "clause_title": current_clause_title if _is_valid_clause_title(current_clause_title) else None,
+                    "clause_title": current_clause_title,
                     "clause_number": current_clause_number,
                     "content": current_text
                 })
@@ -97,14 +60,14 @@ def format_chunks(text, file_type="txt", page_num=None):
                 current_text += "\n" + para
             else:
                 current_text = para
-                # Start of doc without a clause header – do not assign a fake title
-                current_clause_title = None
+                # Maybe it's the start of the doc without a clause header
+                current_clause_title = "Document Start"
                 current_clause_number = None
 
     if current_text:
         chunks.append({
             "page_number": page_num,
-            "clause_title": current_clause_title if _is_valid_clause_title(current_clause_title) else None,
+            "clause_title": current_clause_title,
             "clause_number": current_clause_number,
             "content": current_text
         })

@@ -113,7 +113,7 @@ cp .env.example .env
 Contents of `.env.example`:
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL=gemini-3.6-flash
+GEMINI_MODEL=gemini-2.5-flash
 DATABASE_URI=sqlite:///legalease.db
 DEBUG=False
 ```
@@ -135,7 +135,7 @@ Follow these steps to deploy LegalEase AI on Render:
    - **Start Command**: `gunicorn -b 0.0.0.0:$PORT backend.app:app`
 5. **Set Environment Variables**: In the Render Dashboard under **Environment**:
    - `GEMINI_API_KEY`: Set to your Google Gemini API key (do not commit this key to Git).
-   - `GEMINI_MODEL`: Set to `gemini-3.6-flash` (or preferred Gemini model).
+   - `GEMINI_MODEL`: Set to `gemini-2.5-flash` (or preferred Gemini model).
    - `DATABASE_URI`: Set to `sqlite:///legalease.db`.
 6. **Health Check Path**: Set health check path to `/api/health`.
 7. **Deploy**: Click **Create Web Service**. Once deployed, open the Render service URL.

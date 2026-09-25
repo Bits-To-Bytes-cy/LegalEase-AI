@@ -6,7 +6,7 @@ API_KEY_ENV = "GEMINI_API_KEY"
 LEGACY_API_KEY_ENV = "LLM_API_KEY"
 MODEL_ENV = "GEMINI_MODEL"
 
-DEFAULT_MODEL = "gemini-3.6-flash"
+DEFAULT_MODEL = "gemini-2.5-flash"
 
 def get_api_key() -> str:
     return os.getenv(API_KEY_ENV) or os.getenv(LEGACY_API_KEY_ENV) or ""
