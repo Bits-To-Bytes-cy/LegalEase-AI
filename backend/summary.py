@@ -26,6 +26,21 @@ DURATION_PATTERNS = [
     r"(?:commenc(?:es?|ing)|effective)\s+(?:from|on|date)\s+(.{0,40}?)\s+(?:and|until|through|to)\s+(.{0,40})",
 ]
 
+# Title phrases that, when found in the document header region, unambiguously identify the type.
+# Checked BEFORE body-text keyword scanning so that a document titled "SERVICE AGREEMENT"
+# is not misclassified because it also contains a Confidentiality section.
+DOC_TYPE_TITLE_PHRASES = [
+    ("Service Agreement",     ["service agreement", "services agreement"]),
+    ("Employment Agreement",  ["employment agreement", "employment contract"]),
+    ("Non-Disclosure Agreement", ["non-disclosure agreement", "nda", "confidentiality agreement"]),
+    ("Lease Agreement",       ["lease agreement", "tenancy agreement", "rental agreement"]),
+    ("License Agreement",     ["license agreement", "licensing agreement"]),
+    ("Purchase Agreement",    ["purchase agreement", "sale and purchase agreement", "asset purchase agreement"]),
+    ("Partnership Agreement", ["partnership agreement", "joint venture agreement"]),
+    ("Loan Agreement",        ["loan agreement", "credit agreement"]),
+]
+
+# Body-text keyword hints used as fallback when no title phrase matched.
 DOC_TYPE_HINTS = {
     "Non-Disclosure Agreement": ["non-disclosure", "nda", "confidential information", "proprietary"],
     "Employment Agreement": ["employment", "employee", "employer", "salary", "wages", "hire"],
@@ -39,6 +54,19 @@ DOC_TYPE_HINTS = {
 
 
 def _detect_document_type(full_text: str) -> str:
+    """Detect document type.
+
+    Pass 1 – title/header zone (first 500 chars): exact phrase match takes priority.
+    Pass 2 – full-text keyword scan: used only when no title phrase matched.
+    """
+    # Pass 1: scan the first 500 characters (title / header region)
+    header_zone = full_text[:500].lower()
+    for doc_type, phrases in DOC_TYPE_TITLE_PHRASES:
+        for phrase in phrases:
+            if phrase in header_zone:
+                return doc_type
+
+    # Pass 2: fall back to full-text keyword scan (original behaviour)
     lowered = full_text.lower()
     for doc_type, keywords in DOC_TYPE_HINTS.items():
         for kw in keywords:

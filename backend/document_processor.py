@@ -19,6 +19,28 @@ CLAUSE_PATTERNS = [
     r"(?i)\bDISPUTE RESOLUTION\b"
 ]
 
+def _is_valid_clause_title(title: str) -> bool:
+    """Return True only if the title looks like a genuine structural heading.
+
+    Rejects:
+    - None / empty
+    - The 'Document Start' placeholder
+    - Titles that end with sentence-ending punctuation (fragments like 'after termination.')
+    - Titles shorter than 3 characters
+    """
+    if not title or not title.strip():
+        return False
+    t = title.strip()
+    if t.lower() == "document start":
+        return False
+    # Reject if it ends with sentence-ending punctuation – strong indicator of a fragment, not a heading
+    if t.endswith(('.', '?', '!', ',', ';')):
+        return False
+    if len(t) < 3:
+        return False
+    return True
+
+
 def format_chunks(text, file_type="txt", page_num=None):
     # simple chunker that respects clause boundaries
     # split by paragraphs first
@@ -49,7 +71,7 @@ def format_chunks(text, file_type="txt", page_num=None):
             if len(current_text) > 0:
                 chunks.append({
                     "page_number": page_num,
-                    "clause_title": current_clause_title,
+                    "clause_title": current_clause_title if _is_valid_clause_title(current_clause_title) else None,
                     "clause_number": current_clause_number,
                     "content": current_text
                 })
@@ -60,14 +82,14 @@ def format_chunks(text, file_type="txt", page_num=None):
                 current_text += "\n" + para
             else:
                 current_text = para
-                # Maybe it's the start of the doc without a clause header
-                current_clause_title = "Document Start"
+                # Start of doc without a clause header – do not assign a fake title
+                current_clause_title = None
                 current_clause_number = None
 
     if current_text:
         chunks.append({
             "page_number": page_num,
-            "clause_title": current_clause_title,
+            "clause_title": current_clause_title if _is_valid_clause_title(current_clause_title) else None,
             "clause_number": current_clause_number,
             "content": current_text
         })

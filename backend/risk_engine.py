@@ -140,8 +140,22 @@ def analyze_risks(document_id: int) -> list:
         )
         all_flags.extend(flags)
 
+    # Deduplicate: collapse identical (risk_type + clause identity) entries.
+    # Clause identity is: clause_number if present, else normalised clause_title.
+    # This prevents the same risk flag from appearing multiple times for duplicate
+    # or overlapping chunks that cover the same structural clause.
+    seen_risk_keys = set()
+    deduped_flags = []
+    for flag in all_flags:
+        norm_title = (flag.get("clause_title") or "").strip().lower()
+        clause_id = flag.get("clause_number") or norm_title or str(flag.get("chunk_id", ""))
+        key = (flag["risk_type"], clause_id)
+        if key not in seen_risk_keys:
+            seen_risk_keys.add(key)
+            deduped_flags.append(flag)
+
     # Order: IMPORTANT > REVIEW > INFO
     order = {"IMPORTANT": 0, "REVIEW": 1, "INFO": 2}
-    all_flags.sort(key=lambda f: order.get(f["severity"], 3))
-    safe_log("info", f"Risk analysis for document {document_id}: {len(all_flags)} flags found")
-    return all_flags
+    deduped_flags.sort(key=lambda f: order.get(f["severity"], 3))
+    safe_log("info", f"Risk analysis for document {document_id}: {len(deduped_flags)} flags found (after deduplication)")
+    return deduped_flags
