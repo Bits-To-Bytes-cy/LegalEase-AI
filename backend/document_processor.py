@@ -27,17 +27,32 @@ def _is_valid_clause_title(title: str) -> bool:
     - The 'Document Start' placeholder
     - Titles that end with sentence-ending punctuation (fragments like 'after termination.')
     - Titles shorter than 3 characters
+    - Prose-sentence continuations stored as 50-char truncations
+      (e.g. 'Termination becomes effective upon expiry of the n')
     """
     if not title or not title.strip():
         return False
     t = title.strip()
     if t.lower() == "document start":
         return False
-    # Reject if it ends with sentence-ending punctuation – strong indicator of a fragment, not a heading
+    # Reject if it ends with sentence-ending punctuation – strong indicator of a fragment
     if t.endswith(('.', '?', '!', ',', ';')):
         return False
     if len(t) < 3:
         return False
+    # Reject prose-sentence continuations:
+    # Genuine structural headings have few words or are ALL-CAPS / numbered.
+    # A continuation sentence like "Termination becomes effective upon expiry of the n"
+    # has many words and the majority are lowercase verbs/prepositions.
+    words = t.split()
+    if len(words) >= 5:
+        # Count lowercase words (not ALL-CAPS, not Title-Case-single)
+        lowercase_count = sum(1 for w in words if w == w.lower() and w.isalpha())
+        if lowercase_count >= len(words) // 2:
+            # Looks like a prose sentence, not a heading – but allow "Limitation of Liability" etc.
+            # Exception: if it starts with a digit (numbered clause) keep it
+            if not words[0][0].isdigit():
+                return False
     return True
 
 
